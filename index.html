@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>משחק לוח הכפל!</title>
+<style>
+  :root {
+    --purple: #7c4dff;
+    --purple-dark: #5e35b1;
+    --orange: #ff9800;
+    --yellow: #ffd54f;
+    --green: #4caf50;
+    --red: #f44336;
+    --card-bg: #ffffff;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #7c4dff 0%, #ff9800 50%, #ffd54f 100%);
+    background-size: 400% 400%;
+    animation: gradientMove 12s ease infinite;
+    padding: 16px;
+  }
+
+  @keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 28px;
+    padding: 28px 24px;
+    box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+    text-align: center;
+    animation: pop 0.35s ease;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  h1 {
+    font-size: 2rem;
+    margin: 0 0 4px;
+    color: var(--purple-dark);
+  }
+
+  .subtitle {
+    color: #555;
+    margin: 0 0 20px;
+    font-size: 1.05rem;
+  }
+
+  .best-score {
+    background: #fff3cd;
+    border-radius: 14px;
+    padding: 10px 14px;
+    margin-bottom: 20px;
+    font-size: 1rem;
+    color: #7a5c00;
+    font-weight: 600;
+  }
+
+  .section-label {
+    font-weight: 700;
+    color: var(--purple-dark);
+    margin: 18px 0 10px;
+    font-size: 1.1rem;
+  }
+
+  .range-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .range-btn {
+    padding: 16px 8px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    border: 3px solid transparent;
+    border-radius: 16px;
+    background: #f1eaff;
+    color: var(--purple-dark);
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.15s ease;
+  }
+
+  .range-btn:hover { transform: translateY(-2px); }
+  .range-btn:active { transform: scale(0.96); }
+
+  .range-btn.selected {
+    background: var(--purple);
+    color: white;
+    border-color: var(--purple-dark);
+  }
+
+  .big-btn {
+    width: 100%;
+    margin-top: 22px;
+    padding: 18px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: white;
+    background: linear-gradient(135deg, var(--orange), #ff6f00);
+    border: none;
+    border-radius: 18px;
+    cursor: pointer;
+    box-shadow: 0 8px 0 #c05e00, 0 14px 20px rgba(0,0,0,0.2);
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+  }
+
+  .big-btn:active {
+    transform: translateY(6px);
+    box-shadow: 0 2px 0 #c05e00, 0 6px 10px rgba(0,0,0,0.2);
+  }
+
+  .hidden { display: none !important; }
+
+  /* Game screen */
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+
+  .hud-item {
+    background: #f1eaff;
+    border-radius: 14px;
+    padding: 10px 16px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--purple-dark);
+    min-width: 78px;
+  }
+
+  #timerBox.low-time {
+    background: #ffdcdc;
+    color: var(--red);
+    animation: pulse 0.6s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+
+  .streak {
+    font-size: 0.95rem;
+    color: var(--orange);
+    font-weight: 700;
+    min-height: 22px;
+    margin-bottom: 6px;
+  }
+
+  .question {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #333;
+    margin: 10px 0 26px;
+    transition: color 0.2s ease;
+  }
+
+  .answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .answer-btn {
+    padding: 22px 8px;
+    font-size: 1.6rem;
+    font-weight: 800;
+    border: none;
+    border-radius: 18px;
+    background: #eef1ff;
+    color: var(--purple-dark);
+    cursor: pointer;
+    box-shadow: 0 6px 0 #c7cdf5;
+    transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.2s ease;
+  }
+
+  .answer-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #c7cdf5;
+  }
+
+  .answer-btn.correct {
+    background: #c8f7c5;
+    color: #1b5e20;
+    box-shadow: 0 6px 0 #7fce7c;
+  }
+
+  .answer-btn.wrong {
+    background: #ffd0d0;
+    color: #b71c1c;
+    box-shadow: 0 6px 0 #ef9a9a;
+  }
+
+  .answer-btn:disabled { cursor: default; }
+
+  .feedback {
+    min-height: 30px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-top: 16px;
+  }
+
+  .feedback.good { color: var(--green); }
+  .feedback.bad { color: var(--red); }
+
+  /* End screen */
+  .end-emoji {
+    font-size: 3.5rem;
+    margin-bottom: 6px;
+  }
+
+  .final-score {
+    font-size: 2.6rem;
+    font-weight: 800;
+    color: var(--purple-dark);
+    margin: 6px 0;
+  }
+
+  .final-detail {
+    color: #555;
+    font-size: 1.05rem;
+    margin-bottom: 6px;
+  }
+
+  .new-best {
+    color: var(--orange);
+    font-weight: 800;
+    font-size: 1.15rem;
+    margin: 10px 0;
+  }
+
+  @media (max-width: 380px) {
+    .question { font-size: 2.3rem; }
+    .answer-btn { font-size: 1.3rem; padding: 18px 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- START SCREEN -->
+  <div class="card" id="startScreen">
+    <h1>🎉 משחק לוח הכפל! 🎉</h1>
+    <p class="subtitle">כמה שאלות תצליחו לפתור ב-60 שניות?</p>
+    <div class="best-score" id="bestScoreBox">אין עדיין שיא - בואו נתחיל!</div>
+
+    <div class="section-label">בחרו טווח לוח הכפל</div>
+    <div class="range-grid">
+      <button class="range-btn" data-range="5">לוח הכפל 1-5</button>
+      <button class="range-btn selected" data-range="10">לוח הכפל 1-10</button>
+    </div>
+
+    <button class="big-btn" id="startBtn">בואו נשחק! 🚀</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div class="card hidden" id="gameScreen">
+    <div class="hud">
+      <div class="hud-item" id="timerBox">⏱️ 60</div>
+      <div class="hud-item" id="scoreBox">⭐ 0</div>
+    </div>
+    <div class="streak" id="streakBox"></div>
+    <div class="question" id="questionText">? × ? =</div>
+    <div class="answers" id="answersGrid"></div>
+    <div class="feedback" id="feedbackText"></div>
+  </div>
+
+  <!-- END SCREEN -->
+  <div class="card hidden" id="endScreen">
+    <div class="end-emoji" id="endEmoji">🏆</div>
+    <div>הזמן נגמר!</div>
+    <div class="final-score" id="finalScore">0</div>
+    <div class="final-detail" id="finalDetail"></div>
+    <div class="new-best hidden" id="newBestMsg">שיא חדש! כל הכבוד! 🎊</div>
+    <button class="big-btn" id="againBtn">שחקו שוב 🔁</button>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  const GAME_SECONDS = 60;
+  const STORAGE_PREFIX = "kefel_best_";
+
+  const startScreen = document.getElementById("startScreen");
+  const gameScreen = document.getElementById("gameScreen");
+  const endScreen = document.getElementById("endScreen");
+
+  const bestScoreBox = document.getElementById("bestScoreBox");
+  const rangeBtns = document.querySelectorAll(".range-btn");
+  const startBtn = document.getElementById("startBtn");
+
+  const timerBox = document.getElementById("timerBox");
+  const scoreBox = document.getElementById("scoreBox");
+  const streakBox = document.getElementById("streakBox");
+  const questionText = document.getElementById("questionText");
+  const answersGrid = document.getElementById("answersGrid");
+  const feedbackText = document.getElementById("feedbackText");
+
+  const finalScore = document.getElementById("finalScore");
+  const finalDetail = document.getElementById("finalDetail");
+  const newBestMsg = document.getElementById("newBestMsg");
+  const endEmoji = document.getElementById("endEmoji");
+  const againBtn = document.getElementById("againBtn");
+
+  let selectedRange = 10;
+  let timeLeft = GAME_SECONDS;
+  let score = 0;
+  let streak = 0;
+  let correctCount = 0;
+  let totalCount = 0;
+  let timerId = null;
+  let currentAnswer = null;
+  let lastQuestionKey = null;
+  let answering = false;
+
+  function bestKey(range) {
+    return STORAGE_PREFIX + range;
+  }
+
+  function getBest(range) {
+    return parseInt(localStorage.getItem(bestKey(range)) || "0", 10);
+  }
+
+  function setBest(range, value) {
+    localStorage.setItem(bestKey(range), String(value));
+  }
+
+  function updateBestScoreBox() {
+    const best = getBest(selectedRange);
+    bestScoreBox.textContent = best > 0
+      ? `🏅 השיא שלכם בטווח 1-${selectedRange}: ${best} נקודות`
+      : "אין עדיין שיא - בואו נתחיל!";
+  }
+
+  rangeBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      rangeBtns.forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedRange = parseInt(btn.dataset.range, 10);
+      updateBestScoreBox();
+    });
+  });
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function generateQuestion() {
+    let a, b, key;
+    do {
+      a = randInt(1, selectedRange);
+      b = randInt(1, selectedRange);
+      key = a <= b ? `${a}x${b}` : `${b}x${a}`;
+    } while (key === lastQuestionKey);
+    lastQuestionKey = key;
+    return { a, b, answer: a * b };
+  }
+
+  function generateDistractors(a, b, correct) {
+    const distractors = new Set();
+    const candidates = [
+      a * b + a,
+      a * b - a,
+      a * b + b,
+      a * b - b,
+      (a + 1) * b,
+      (a - 1) * b,
+      a * (b + 1),
+      a * (b - 1),
+      correct + randInt(1, 5),
+      correct - randInt(1, 5),
+    ];
+    for (const c of candidates) {
+      if (c > 0 && c !== correct) distractors.add(c);
+      if (distractors.size >= 8) break;
+    }
+    const pool = Array.from(distractors);
+    while (pool.length < 3) {
+      const c = correct + randInt(-10, 10);
+      if (c > 0 && c !== correct && !pool.includes(c)) pool.push(c);
+    }
+    // shuffle pool and take 3
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return pool.slice(0, 3);
+  }
+
+  function renderQuestion() {
+    const { a, b, answer } = generateQuestion();
+    currentAnswer = answer;
+    questionText.textContent = `${a} × ${b} = ?`;
+
+    const options = generateDistractors(a, b, answer);
+    options.push(answer);
+    for (let i = options.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [options[i], options[j]] = [options[j], options[i]];
+    }
+
+    answersGrid.innerHTML = "";
+    feedbackText.textContent = "";
+    feedbackText.className = "feedback";
+    answering = true;
+
+    options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "answer-btn";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => handleAnswer(btn, opt));
+      answersGrid.appendChild(btn);
+    });
+  }
+
+  function handleAnswer(btn, value) {
+    if (!answering) return;
+    answering = false;
+    totalCount++;
+
+    const allBtns = answersGrid.querySelectorAll(".answer-btn");
+    allBtns.forEach(b => (b.disabled = true));
+
+    if (value === currentAnswer) {
+      correctCount++;
+      streak++;
+      const bonus = streak >= 5 ? 3 : streak >= 3 ? 1 : 0;
+      score += 10 + bonus;
+      btn.classList.add("correct");
+      feedbackText.textContent = bonus ? `כל הכבוד! 🎉 (+${10 + bonus} עם בונוס רצף)` : "כל הכבוד! 🎉";
+      feedbackText.classList.add("good");
+      streakBox.textContent = streak >= 3 ? `🔥 רצף של ${streak}!` : "";
+    } else {
+      streak = 0;
+      streakBox.textContent = "";
+      btn.classList.add("wrong");
+      allBtns.forEach(b => {
+        if (parseInt(b.textContent, 10) === currentAnswer) {
+          b.classList.add("correct");
+        }
+      });
+      feedbackText.textContent = `לא נורא! התשובה הנכונה היא ${currentAnswer}`;
+      feedbackText.classList.add("bad");
+    }
+
+    scoreBox.textContent = `⭐ ${score}`;
+
+    setTimeout(() => {
+      if (timeLeft > 0) renderQuestion();
+    }, 900);
+  }
+
+  function tick() {
+    timeLeft--;
+    timerBox.textContent = `⏱️ ${timeLeft}`;
+    if (timeLeft <= 10) {
+      timerBox.classList.add("low-time");
+    }
+    if (timeLeft <= 0) {
+      endGame();
+    }
+  }
+
+  function startGame() {
+    score = 0;
+    streak = 0;
+    correctCount = 0;
+    totalCount = 0;
+    timeLeft = GAME_SECONDS;
+    lastQuestionKey = null;
+
+    scoreBox.textContent = "⭐ 0";
+    timerBox.textContent = `⏱️ ${GAME_SECONDS}`;
+    timerBox.classList.remove("low-time");
+    streakBox.textContent = "";
+
+    startScreen.classList.add("hidden");
+    endScreen.classList.add("hidden");
+    gameScreen.classList.remove("hidden");
+
+    renderQuestion();
+    clearInterval(timerId);
+    timerId = setInterval(tick, 1000);
+  }
+
+  function endGame() {
+    clearInterval(timerId);
+    answering = false;
+    gameScreen.classList.add("hidden");
+    endScreen.classList.remove("hidden");
+
+    finalScore.textContent = score;
+    finalDetail.textContent = `ענית נכון על ${correctCount} מתוך ${totalCount} שאלות`;
+
+    const best = getBest(selectedRange);
+    if (score > best) {
+      setBest(selectedRange, score);
+      newBestMsg.classList.remove("hidden");
+      endEmoji.textContent = "🏆";
+    } else {
+      newBestMsg.classList.add("hidden");
+      endEmoji.textContent = score >= 100 ? "🌟" : "😊";
+    }
+  }
+
+  startBtn.addEventListener("click", startGame);
+  againBtn.addEventListener("click", () => {
+    endScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
+    updateBestScoreBox();
+  });
+
+  updateBestScoreBox();
+})();
+</script>
+</body>
+</html>
